@@ -3,6 +3,7 @@ const Card = require('../models/card');
 const ERROR_BAD_REQ = 400;
 const ERROR_NOT_FOUND = 404;
 const ERROR_SERVER = 500;
+const CREATED = 201;
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
@@ -10,7 +11,7 @@ const createCard = (req, res) => {
 
   Card.create({ name, link, owner })
     .then((card) => {
-      res.send(card);
+      res.status(CREATED).send(card);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {

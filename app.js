@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 
 const app = express();
 
@@ -10,6 +11,7 @@ const cardsRouter = require('./routes/cards');
 mongoose.connect('mongodb://0.0.0.0:27017/mestodb');
 
 app.use(bodyParser.json());
+app.use(helmet());
 
 app.use((req, res, next) => {
   req.user = {
