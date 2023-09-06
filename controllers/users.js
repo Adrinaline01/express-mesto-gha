@@ -7,17 +7,12 @@ const ErrorBadReq = require('../errors/error-bad-req');
 const ErrorConflict = require('../errors/error-conflict');
 const ErrorNotFound = require('../errors/error-not-found');
 
-// const ERROR_BAD_REQ = 400;
-// const ERROR_NOT_FOUND = 404;
-// const ERROR_SERVER = 500;
-// const ERROR_AUTH = 401;
 
 const CREATED = 201;
 
 const createUser = (req, res, next) => {
   const {
-    name, about, avatar, email, password,
-  } = req.body;
+    name, about, avatar, email, password } = req.body;
 
   bcrypt.hash(String(password), 10)
     .then((hashedPassword) => {
@@ -25,7 +20,13 @@ const createUser = (req, res, next) => {
         name, about, avatar, email, password: hashedPassword,
       })
         .then((user) => {
-          res.status(CREATED).send(user);
+          res.status(CREATED).send({
+            name: user.name,
+            about: user.about,
+            avatar: user.avatar,
+            email: user.email,
+            _id: user._id
+          });
         })
         .catch((error) => {
           if (error.name === 'ValidationError') {

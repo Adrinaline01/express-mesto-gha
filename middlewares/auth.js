@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const ErrorAuth = require('../errors/error-auth');
 
 const auth = (req, res, next) => {
   const jwtToken = req.cookies.token;
@@ -8,7 +9,7 @@ const auth = (req, res, next) => {
   try {
     client = jwt.verify(jwtToken, 'super-strong-secret');
   } catch (err) {
-    next();
+    next(new ErrorAuth('Вы не авторизованы'));
   }
   req.user = client;
   next();

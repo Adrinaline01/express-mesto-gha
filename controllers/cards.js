@@ -1,11 +1,12 @@
 const Card = require('../models/card');
 
-const ERROR_BAD_REQ = 400;
-const ERROR_NOT_FOUND = 404;
-const ERROR_SERVER = 500;
+const ErrorBadReq = require('../errors/error-bad-req');
+const ErrorNotFound = require('../errors/error-not-found');
+
+
 const CREATED = 201;
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
@@ -15,39 +16,38 @@ const createCard = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные при создании карточки' });
+        next(new ErrorBadReq('Неверные данные при создании карточки'))
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
 
-const getCards = (res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
       res.send(cards);
     })
-    .catch(() => {
-      res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
-    });
+    .catch(next);
 };
 
-const deleteCard = (req, res) => {
-  Card.findByIdAndDelete(req.params.cardId)
+const deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
-        return;
+        throw new ErrorNotFound('На сервере нет этой карточки')
       } if (card.owner.toString() !== req.user._id) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
+        throw new ErrorNotFound('У вас нет прав удалять эту карточку')
       }
-      res.send(card);
+      Card.deleteOne(card)
+        .then(() => res.send({ message: 'Карточка удалена' }))
+        .catch(next)
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные карточки' });
+        next(new ErrorBadReq('Неверные данные карточки'))
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error)
       }
     });
 };
@@ -60,16 +60,15 @@ const likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
-        return;
+        throw new ErrorNotFound('На сервере нет этой карточки');
       }
       res.send(card);
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные карточки' });
+        next(new ErrorBadReq('Неверные данные карточки для лайка'));
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
@@ -82,16 +81,15 @@ const dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
-        return;
+        throw new ErrorNotFound('На сервере нет этой карточки');
       }
       res.send(card);
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные карточки' });
+        next(new ErrorBadReq('Неверные данные карточки для снятия лайка'))
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
