@@ -1,14 +1,11 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 const ErrorAuth = require('../errors/error-auth');
 const ErrorBadReq = require('../errors/error-bad-req');
 const ErrorConflict = require('../errors/error-conflict');
-const ErrorForbidden = require('../errors/error-forbidden');
 const ErrorNotFound = require('../errors/error-not-found');
-const ErrorServer = require('../errors/error-server');
-
 
 // const ERROR_BAD_REQ = 400;
 // const ERROR_NOT_FOUND = 404;
@@ -18,33 +15,35 @@ const ErrorServer = require('../errors/error-server');
 const CREATED = 201;
 
 const createUser = (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
-
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
   bcrypt.hash(String(password), 10)
-  .then((hashedPassword) => {
-    User.create({ name, about, avatar, email, password: hashedPassword })
-    .then((user) => {
-      res.status(CREATED).send(user);
-    })
-    .catch((error) => {
-      if (error.name === 'ValidationError') {
-        next(new ErrorBadReq('Неверные данные пользователя при регистрации'))
-      } else if (error.code === 11000) {
-        next(new ErrorConflict('Пользователь с таким email уже существует'));
-      } else {
-        next(error);
-      }
+    .then((hashedPassword) => {
+      User.create({
+        name, about, avatar, email, password: hashedPassword,
+      })
+        .then((user) => {
+          res.status(CREATED).send(user);
+        })
+        .catch((error) => {
+          if (error.name === 'ValidationError') {
+            next(new ErrorBadReq('Неверные данные пользователя при регистрации'));
+          } else if (error.code === 11000) {
+            next(new ErrorConflict('Пользователь с таким email уже существует'));
+          } else {
+            next(error);
+          }
+        });
     });
-  })
-  
 };
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    throw new ErrorAuth('Введены неверные данные для входа')
+    throw new ErrorAuth('Введены неверные данные для входа');
   }
 
   User.findOne({ email })
@@ -62,15 +61,15 @@ const login = (req, res, next) => {
               maxAge: 36000 * 24 * 5,
               httpOnly: true,
               sameSite: true,
-            })
-            res.send({ data: user.toJSON() })
+            });
+            res.send({ data: user.toJSON() });
           } else {
             next(new ErrorAuth('Введены неверные данные для входа'));
           }
         });
     })
     .catch(next);
-}
+};
 
 const getUsers = (req, res, next) => {
   User.find({})
@@ -103,13 +102,13 @@ const updateProfileUser = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((user) => {
       if (!user) {
-        throw new ErrorNotFound('На сервере нет данного пользователя')
+        throw new ErrorNotFound('На сервере нет данного пользователя');
       }
       res.send(user);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        next(new ErrorBadReq('Неверные данные обновления профиля'))
+        next(new ErrorBadReq('Неверные данные обновления профиля'));
       } else {
         next(error);
       }
@@ -122,7 +121,7 @@ const updateAvatarUser = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => {
       if (!user) {
-        throw new ErrorNotFound('На сервере нет данного пользователя')
+        throw new ErrorNotFound('На сервере нет данного пользователя');
       }
       res.send(user);
     })

@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Поле "password" должно быть заполнено'],
     select: false,
-  }
+  },
 }, { versionKey: false });
 
 const User = mongoose.model('user', userSchema);

@@ -38,7 +38,7 @@ const deleteCard = (req, res) => {
       if (!card) {
         res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
         return;
-      } else if (card.owner.toString() !== req.user._id) {
+      } if (card.owner.toString() !== req.user._id) {
         res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет этой карточки' });
       }
       res.send(card);
