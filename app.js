@@ -2,27 +2,26 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const auth = require('./middlewares/auth');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
 const usersRouter = require('./routes/users');
+const { login, createUser } = require('./controllers/users')
 const cardsRouter = require('./routes/cards');
 
 mongoose.connect('mongodb://0.0.0.0:27017/mestodb');
 
 app.use(bodyParser.json());
 app.use(helmet());
+app.use(cookieParser())
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64f22c2a78b07ffa8fd4f0b5', // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
+app.post('/signin', login);
+app.post('/signup', createUser);
 
-  next();
-});
-
-app.use('/users', usersRouter);
-app.use('/cards', cardsRouter);
+app.use('/users', auth, usersRouter);
+app.use('/cards', auth, cardsRouter);
 
 app.listen(3000, () => {
 

@@ -1,92 +1,136 @@
-const User = require('../models/user');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
 
-const ERROR_BAD_REQ = 400;
-const ERROR_NOT_FOUND = 404;
-const ERROR_SERVER = 500;
+const User = require('../models/user');
+const ErrorAuth = require('../errors/error-auth');
+const ErrorBadReq = require('../errors/error-bad-req');
+const ErrorConflict = require('../errors/error-conflict');
+const ErrorForbidden = require('../errors/error-forbidden');
+const ErrorNotFound = require('../errors/error-not-found');
+const ErrorServer = require('../errors/error-server');
+
+
+// const ERROR_BAD_REQ = 400;
+// const ERROR_NOT_FOUND = 404;
+// const ERROR_SERVER = 500;
+// const ERROR_AUTH = 401;
+
 const CREATED = 201;
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+const createUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
 
-  User.create({ name, about, avatar })
+
+  bcrypt.hash(String(password), 10)
+  .then((hashedPassword) => {
+    User.create({ name, about, avatar, email, password: hashedPassword })
     .then((user) => {
       res.status(CREATED).send(user);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные пользователя' });
+        next(new ErrorBadReq('Неверные данные пользователя при регистрации'))
+      } else if (error.code === 11000) {
+        next(new ErrorConflict('Пользователь с таким email уже существует'));
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
+  })
+  
 };
 
-const getUsers = (res) => {
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    throw new ErrorAuth('Введены неверные данные для входа')
+  }
+
+  User.findOne({ email })
+    .select('+password')
+    .orFail(() => next(new ErrorAuth('Введены неверные данные для входа')))
+    .then((user) => {
+      bcrypt.compare(String(password), user.password)
+        .then((isValidUser) => {
+          if (isValidUser) {
+            const token = jwt.sign({
+              _id: user._id,
+              expiresIn: '5d',
+            }, 'super-strong-secret');
+            res.cookie('token', token, {
+              maxAge: 36000 * 24 * 5,
+              httpOnly: true,
+              sameSite: true,
+            })
+            res.send({ data: user.toJSON() })
+          } else {
+            next(new ErrorAuth('Введены неверные данные для входа'));
+          }
+        });
+    })
+    .catch(next);
+}
+
+const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
       res.send(users);
     })
-    .catch(() => {
-      res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
-    });
+    .catch(next);
 };
 
-const getUserById = (req, res) => {
-  const { userId } = req.params;
-
-  User.findById(userId)
+const getUserById = (req, res, next) => {
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет данного пользователя' });
-        return;
+        throw new ErrorNotFound('На сервере нет данного пользователя');
       }
       res.send(user);
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные пользователя' });
+        next(new ErrorBadReq('Неверные данные пользователя'));
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
 
-const updateProfileUser = (req, res) => {
+const updateProfileUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((user) => {
       if (!user) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет данного пользователя' });
-        return;
+        throw new ErrorNotFound('На сервере нет данного пользователя')
       }
       res.send(user);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные обновления профиля' });
+        next(new ErrorBadReq('Неверные данные обновления профиля'))
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
 
-const updateAvatarUser = (req, res) => {
+const updateAvatarUser = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => {
       if (!user) {
-        res.status(ERROR_NOT_FOUND).send({ message: 'На сервере нет данного пользователя' });
-        return;
+        throw new ErrorNotFound('На сервере нет данного пользователя')
       }
       res.send(user);
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        res.status(ERROR_BAD_REQ).send({ message: 'Неверные данные обновления аватара' });
+        next(new ErrorBadReq('Неверные данные обновления аватара'));
       } else {
-        res.status(ERROR_SERVER).send({ message: 'На сервере что-то сломалось' });
+        next(error);
       }
     });
 };
@@ -97,4 +141,5 @@ module.exports = {
   getUserById,
   updateProfileUser,
   updateAvatarUser,
+  login,
 };
