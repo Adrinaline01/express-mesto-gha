@@ -2,6 +2,7 @@ const Card = require('../models/card');
 
 const ErrorBadReq = require('../errors/error-bad-req');
 const ErrorNotFound = require('../errors/error-not-found');
+const ErrorForbidden = require('../errors/error-forbidden');
 
 const CREATED = 201;
 
@@ -36,7 +37,7 @@ const deleteCard = (req, res, next) => {
       if (!card) {
         throw new ErrorNotFound('На сервере нет этой карточки');
       } if (card.owner.toString() !== req.user._id) {
-        throw new ErrorNotFound('У вас нет прав удалять эту карточку');
+        throw new ErrorForbidden('У вас нет прав удалять эту карточку');
       }
       Card.deleteOne(card)
         .then(() => res.send({ message: 'Карточка удалена' }))

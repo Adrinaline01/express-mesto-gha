@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const { celebrate, Joi } = require('celebrate');
+const { celebrate, Joi, errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 
 const app = express();
@@ -45,6 +45,8 @@ app.use('/cards', cardsRouter);
 app.use('*', (req, res, next) => {
   next(new ErrorNotFound('Упс! Такой страницы нет :('));
 });
+
+app.use(errors())
 
 app.use(errorCentral);
 

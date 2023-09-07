@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
-      validator: (v) => validator.isEmail(v),
+      validator: (v) => validator.isUrl(v),
       message: 'Некорректный URL',
     },
   },
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Поле "email" должно быть заполнено'],
     unique: true,
     validate: {
-      validator: (v) => validator.isURL(v),
+      validator: (v) => validator.isEmail(v),
       message: 'Некорректный email',
     },
   },
