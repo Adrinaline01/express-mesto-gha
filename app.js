@@ -3,8 +3,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const auth = require('./middlewares/auth');
 const { celebrate, Joi } = require('celebrate');
+const auth = require('./middlewares/auth');
 
 const app = express();
 
@@ -13,7 +13,7 @@ const { login, createUser } = require('./controllers/users');
 const cardsRouter = require('./routes/cards');
 const ErrorNotFound = require('./errors/error-not-found');
 const errorCentral = require('./middlewares/error-central');
-const regexUrl = require('./utils/constants')
+const regexUrl = require('./utils/constants');
 
 mongoose.connect('mongodb://0.0.0.0:27017/mestodb');
 
@@ -24,8 +24,8 @@ app.use(cookieParser());
 app.post('/signin', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(8)
-  })
+    password: Joi.string().required().min(8),
+  }),
 }), login);
 app.post('/signup', celebrate({
   body: Joi.object().keys({
@@ -33,8 +33,8 @@ app.post('/signup', celebrate({
     about: Joi.string().min(2).max(30),
     avatar: Joi.string().regex(regexUrl),
     email: Joi.string().required().email(),
-    password: Joi.string().required().min(8)
-  })
+    password: Joi.string().required().min(8),
+  }),
 }), createUser);
 
 app.use(auth);
@@ -42,9 +42,9 @@ app.use(auth);
 app.use('/users', usersRouter);
 app.use('/cards', cardsRouter);
 
-app.use('*', (req, res, next) =>{
+app.use('*', (req, res, next) => {
   next(new ErrorNotFound('Упс! Такой страницы нет :('));
-})
+});
 
 app.use(errorCentral);
 

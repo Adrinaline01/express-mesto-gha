@@ -7,12 +7,12 @@ const ErrorBadReq = require('../errors/error-bad-req');
 const ErrorConflict = require('../errors/error-conflict');
 const ErrorNotFound = require('../errors/error-not-found');
 
-
 const CREATED = 201;
 
 const createUser = (req, res, next) => {
   const {
-    name, about, avatar, email, password } = req.body;
+    name, about, avatar, email, password,
+  } = req.body;
 
   bcrypt.hash(String(password), 10)
     .then((hashedPassword) => {
@@ -25,7 +25,7 @@ const createUser = (req, res, next) => {
             about: user.about,
             avatar: user.avatar,
             email: user.email,
-            _id: user._id
+            _id: user._id,
           });
         })
         .catch((error) => {

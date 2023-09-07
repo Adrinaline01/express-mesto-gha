@@ -3,7 +3,6 @@ const Card = require('../models/card');
 const ErrorBadReq = require('../errors/error-bad-req');
 const ErrorNotFound = require('../errors/error-not-found');
 
-
 const CREATED = 201;
 
 const createCard = (req, res, next) => {
@@ -16,7 +15,7 @@ const createCard = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        next(new ErrorBadReq('Неверные данные при создании карточки'))
+        next(new ErrorBadReq('Неверные данные при создании карточки'));
       } else {
         next(error);
       }
@@ -35,24 +34,24 @@ const deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
-        throw new ErrorNotFound('На сервере нет этой карточки')
+        throw new ErrorNotFound('На сервере нет этой карточки');
       } if (card.owner.toString() !== req.user._id) {
-        throw new ErrorNotFound('У вас нет прав удалять эту карточку')
+        throw new ErrorNotFound('У вас нет прав удалять эту карточку');
       }
       Card.deleteOne(card)
         .then(() => res.send({ message: 'Карточка удалена' }))
-        .catch(next)
+        .catch(next);
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        next(new ErrorBadReq('Неверные данные карточки'))
+        next(new ErrorBadReq('Неверные данные карточки'));
       } else {
-        next(error)
+        next(error);
       }
     });
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -73,7 +72,7 @@ const likeCard = (req, res) => {
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -87,7 +86,7 @@ const dislikeCard = (req, res) => {
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        next(new ErrorBadReq('Неверные данные карточки для снятия лайка'))
+        next(new ErrorBadReq('Неверные данные карточки для снятия лайка'));
       } else {
         next(error);
       }
